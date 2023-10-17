@@ -1,33 +1,45 @@
-import { Injectable } from '@angular/core';
-import {WeatherService} from "./weather.service";
+import { Injectable, Signal, signal } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 export const LOCATIONS : string = "locations";
 
 @Injectable()
 export class LocationService {
 
-  locations : string[] = [];
+  locations$ = new BehaviorSubject<string>('');
 
-  constructor(private weatherService : WeatherService) {
+  constructor() {
     let locString = localStorage.getItem(LOCATIONS);
-    if (locString)
-      this.locations = JSON.parse(locString);
-    for (let loc of this.locations)
-      this.weatherService.addCurrentConditions(loc);
+    if (locString){
+      let lcodes: string[] = JSON.parse(locString);
+      for (let loc of lcodes)
+        this.locations$.next(loc)
+    }
   }
 
   addLocation(zipcode : string) {
-    this.locations.push(zipcode);
-    localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-    this.weatherService.addCurrentConditions(zipcode);
+    let locString = localStorage.getItem(LOCATIONS);
+    
+    if(locString){
+      let oldLocString: string[]= JSON.parse(locString);
+      oldLocString.push(zipcode);
+      localStorage.setItem(LOCATIONS, JSON.stringify(oldLocString));
+    }else{
+      let locations = [];
+      locations.push(zipcode);
+      localStorage.setItem(LOCATIONS, JSON.stringify(locations));
+    }
+    this.locations$.next(zipcode)
   }
 
   removeLocation(zipcode : string) {
-    let index = this.locations.indexOf(zipcode);
+    let locations =  JSON.parse(localStorage.getItem(LOCATIONS));
+    let index = locations.indexOf(zipcode);
     if (index !== -1){
-      this.locations.splice(index, 1);
-      localStorage.setItem(LOCATIONS, JSON.stringify(this.locations));
-      this.weatherService.removeCurrentConditions(zipcode);
+      locations.splice(index, 1);
+      localStorage.setItem(LOCATIONS, JSON.stringify(locations));
+      this.locations$.next(`-${zipcode}`);   // add a dash at front of the code mark that it is for deletion
     }
+
   }
 }
