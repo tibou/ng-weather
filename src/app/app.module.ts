@@ -14,6 +14,8 @@ import {routing} from "./app.routing";
 import {HttpClientModule} from "@angular/common/http";
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
+import { DisplayTabComponent } from './display-tab/display-tab.component';
+import { TabItemComponent } from './tab-item/tab-item.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +23,7 @@ import { environment } from '../environments/environment';
     ZipcodeEntryComponent,
     ForecastsListComponent,
     CurrentConditionsComponent,
-    MainPageComponent
+    MainPageComponent,
   ],
   imports: [
     BrowserModule,
@@ -29,6 +31,7 @@ import { environment } from '../environments/environment';
     HttpClientModule,
     RouterModule,
     routing,
+    DisplayTabComponent, 
     ServiceWorkerModule.register('/ngsw-worker.js', { enabled: environment.production })
   ],
   providers: [LocationService, WeatherService],

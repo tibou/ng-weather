@@ -1,12 +1,12 @@
-import { Injectable, Signal, signal } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable} from '@angular/core';
+import { BehaviorSubject, ReplaySubject } from 'rxjs';
 
 export const LOCATIONS : string = "locations";
 
 @Injectable()
 export class LocationService {
 
-  locations$ = new BehaviorSubject<string>('');
+  locations$ = new ReplaySubject<string>(100);
 
   constructor() {
     let locString = localStorage.getItem(LOCATIONS);

@@ -23,7 +23,7 @@ export class WeatherService {
     this.locationService.locations$.subscribe(
       (data) => {
         let index = data.slice(0, 1);
-        if(index !== '-'){ // It is a deletion
+        if(index !== '-'){ // It is not a deletion
           this.addCurrentConditions(data);
         }else {
           this.removeCurrentConditions(data.slice(1));
