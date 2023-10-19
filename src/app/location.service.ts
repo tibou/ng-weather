@@ -1,7 +1,7 @@
-import { Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, ReplaySubject } from 'rxjs';
 
-export const LOCATIONS : string = "locations";
+export const LOCATIONS: string = "locations";
 
 @Injectable()
 export class LocationService {
@@ -10,21 +10,25 @@ export class LocationService {
 
   constructor() {
     let locString = localStorage.getItem(LOCATIONS);
-    if (locString){
+    if (locString) {
       let lcodes: string[] = JSON.parse(locString);
       for (let loc of lcodes)
         this.locations$.next(loc)
     }
   }
 
-  addLocation(zipcode : string) {
+  addLocation(zipcode: string) {
     let locString = localStorage.getItem(LOCATIONS);
-    
-    if(locString){
-      let oldLocString: string[]= JSON.parse(locString);
-      oldLocString.push(zipcode);
-      localStorage.setItem(LOCATIONS, JSON.stringify(oldLocString));
-    }else{
+
+    if (locString) {
+      let oldLocString: string[] = JSON.parse(locString);
+      let index = oldLocString.indexOf(zipcode);
+      if (index < 0) {
+        oldLocString.push(zipcode);
+        localStorage.setItem(LOCATIONS, JSON.stringify(oldLocString));
+      }
+
+    } else {
       let locations = [];
       locations.push(zipcode);
       localStorage.setItem(LOCATIONS, JSON.stringify(locations));
@@ -32,14 +36,16 @@ export class LocationService {
     this.locations$.next(zipcode)
   }
 
-  removeLocation(zipcode : string) {
-    let locations =  JSON.parse(localStorage.getItem(LOCATIONS));
+  removeLocation(zipcode: string) {
+    let locations = JSON.parse(localStorage.getItem(LOCATIONS));
+
     let index = locations.indexOf(zipcode);
-    if (index !== -1){
+    if (index !== -1) {
       locations.splice(index, 1);
-      localStorage.setItem(LOCATIONS, JSON.stringify(locations));
       this.locations$.next(`-${zipcode}`);   // add a dash at front of the code mark that it is for deletion
     }
+
+    localStorage.setItem(LOCATIONS, JSON.stringify(locations));
 
   }
 }

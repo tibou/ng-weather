@@ -2,7 +2,11 @@
   <h2>Enter a zipcode:</h2>
   <input type="text" #zipcode placeholder="Zipcode" class="form-control">
   <br>
-  <button class="btn btn-primary" (click)="addLocation(zipcode.value)" >
+  <button class="btn btn-primary" (click)="addLocation(zipcode.value)">
     Add location
   </button>
+  <hr>
+  <label>cache timeout( in seconds):</label>
+  <br>
+  <input type="text" placeholder="7200" class="form-control" value="{{timeout}}" (keyup)="saveTimeout($event)">
 </div>
