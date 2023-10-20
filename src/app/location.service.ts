@@ -6,7 +6,7 @@ export const LOCATIONS: string = "locations";
 @Injectable()
 export class LocationService {
 
-  locations$ = new ReplaySubject<string>(100);
+  locations$ = new ReplaySubject<string>(100); // Only replay up to last one hundred cached elements
 
   constructor() {
     let locString = localStorage.getItem(LOCATIONS);

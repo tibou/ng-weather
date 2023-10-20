@@ -1,4 +1,4 @@
-import { Injectable, OnInit, Signal, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, Signal, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
@@ -7,6 +7,7 @@ import { CurrentConditions } from './current-conditions/current-conditions.type'
 import { ConditionsAndZip } from './conditions-and-zip.type';
 import { Forecast } from './forecasts-list/forecast.type';
 import { LocationService } from './location.service';
+import { CacheService } from './cache.service';
 
 export const CONDITIONS_SUFFIX: string = "con";
 export const FORECAST_SUFFIX: string = "for";
@@ -20,14 +21,10 @@ export class WeatherService {
   static APPID = '5a4b2d457ecbef9eb2a71e480b947604';
   static ICON_URL = 'https://raw.githubusercontent.com/udacity/Sunshine-Version-2/sunshine_master/app/src/main/res/drawable-hdpi/';
   private currentConditions = signal<ConditionsAndZip[]>([]);
-  private cacheForecast: Forecast;
   private timeout;
   timeout$ = new BehaviorSubject<string>('');
 
-  locationService = inject(LocationService);
-
-
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private locationService: LocationService, private cacheService: CacheService) {
 
     this.locationService.locations$.subscribe(
       (data) => {
@@ -42,51 +39,48 @@ export class WeatherService {
 
     this.timeout$.subscribe(data => {
       this.timeout = +data * 1000
-      localStorage.setItem(CACHE_TIMEOUT, data);
+      this.cacheService.cacheData(CACHE_TIMEOUT, data);
     })
 
-    //this.timeout = +localStorage.getItem(CACHE_TIMEOUT) * 1000;
   }
 
   addCurrentConditions(zipcode: string): void {
 
-    if (!localStorage.getItem(`${zipcode}_${CONDITIONS_SUFFIX}`) ||
-      ((new Date().valueOf() - (+localStorage.getItem(`${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`))) >= this.timeout
-      )) {
+    if (this.cacheService.isNotCached(`${zipcode}_${CONDITIONS_SUFFIX}`) ||
+      this.cacheService.isExpired(`${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`, this.timeout)
+    ) {
       // Here we make a request to get the current conditions data from the API. Note the use of backticks and an expression to insert the zipcode
       this.http.get<CurrentConditions>(`${WeatherService.URL}/weather?zip=${zipcode},us&units=imperial&APPID=${WeatherService.APPID}`)
         .subscribe(data => {
 
           this.currentConditions.mutate(conditions => {
-            let temoin: boolean = false;
+            let exists: boolean = false;
             for (let i in conditions) {
               if (conditions[i].zip == zipcode) {
-                temoin = true;
+                exists = true;
                 conditions[i] = { zip: zipcode, data };
-                localStorage.removeItem(`${zipcode}_${CONDITIONS_SUFFIX}`);
-                localStorage.removeItem(`${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`);
+                //remove cache
+                this.cacheService.remove(`${zipcode}_${CONDITIONS_SUFFIX}`, `${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`);
               }
             }
-            if (temoin === false) {
+            if (!exists) {
               conditions.push({ zip: zipcode, data });
             }
 
-            // caching data
-            localStorage.setItem(`${zipcode}_${CONDITIONS_SUFFIX}`, JSON.stringify(data));
-            // cahe current timestamp
-            localStorage.setItem(`${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`, String(new Date().valueOf()));
+            // cache data
+            this.cacheService.cacheDataAndTimestamp(`${zipcode}_${CONDITIONS_SUFFIX}`, `${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`, JSON.stringify(data))
           });
         });
     } else {
-      let cacheCondition: CurrentConditions = JSON.parse(localStorage.getItem(`${zipcode}_${CONDITIONS_SUFFIX}`));
+      let cacheCondition: CurrentConditions = JSON.parse(this.cacheService.getCacheData(`${zipcode}_${CONDITIONS_SUFFIX}`));
       this.currentConditions.mutate(conditions => {
-        let temoin: boolean = false;
+        let exists: boolean = false;
         for (let i in conditions) {
           if (conditions[i].zip == zipcode) {
-            temoin = true;
+            exists = true;
           }
         }
-        if (temoin === false) {
+        if (!exists) {
           conditions.push({ zip: zipcode, data: cacheCondition })
         }
 
@@ -101,10 +95,8 @@ export class WeatherService {
       for (let i in conditions) {
         if (conditions[i].zip == zipcode) {
           conditions.splice(+i, 1);
-          localStorage.removeItem(`${zipcode}_${CONDITIONS_SUFFIX}`);
-          localStorage.removeItem(`${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`);
-          localStorage.removeItem(`${zipcode}_${FORECAST_SUFFIX}`);
-          localStorage.removeItem(`${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`);
+          // remove cached data
+          this.cacheService.remove(`${zipcode}_${CONDITIONS_SUFFIX}`, `${zipcode}_${CONDITIONS_SUFFIX}_${TIME_SUFFIX}`, `${zipcode}_${FORECAST_SUFFIX}`, `${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`);
         }
       }
     })
@@ -117,21 +109,15 @@ export class WeatherService {
   getForecast(zipcode: string): Observable<Forecast> {
 
     // Check cache
-    let cacheForecastString = localStorage.getItem(`${zipcode}_${FORECAST_SUFFIX}`);
-    if (localStorage.getItem(`${zipcode}_${FORECAST_SUFFIX}`) &&
-      (new Date().valueOf() - (+localStorage.getItem(`${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`))) < this.timeout
-    ) {
-      let cacheForecast: Forecast = JSON.parse(cacheForecastString);
+    if (this.cacheService.isCached(`${zipcode}_${FORECAST_SUFFIX}`) && this.cacheService.isNotExpired(`${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`, this.timeout)) {
+      let cacheForecast: Forecast = JSON.parse(this.cacheService.getCacheData(`${zipcode}_${FORECAST_SUFFIX}`));
       return of(cacheForecast)
     }
     // Here we make a request to get the forecast data from the API. Note the use of backticks and an expression to insert the zipcode
     return this.http.get<Forecast>(`${WeatherService.URL}/forecast/daily?zip=${zipcode},us&units=imperial&cnt=5&APPID=${WeatherService.APPID}`)
       .pipe(tap((data: Forecast) => {
-        localStorage.removeItem(`${zipcode}_${FORECAST_SUFFIX}`);
-        localStorage.removeItem(`${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`);
-
-        localStorage.setItem(`${zipcode}_${FORECAST_SUFFIX}`, JSON.stringify(data));  // cache forecast
-        localStorage.setItem(`${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`, String(new Date().valueOf())); // cahe current timestamp
+        this.cacheService.remove(`${zipcode}_${FORECAST_SUFFIX}`, `${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`); // remove old cache
+        this.cacheService.cacheDataAndTimestamp(`${zipcode}_${FORECAST_SUFFIX}`, `${zipcode}_${FORECAST_SUFFIX}_${TIME_SUFFIX}`, JSON.stringify(data)); // cache forecast
       }));
 
   }

@@ -25,8 +25,8 @@ export class DisplayTabComponent {
     this.location = computed(() => this.currentConditionsByZip()[0]);
   }
 
-  showForecast(zipcode: string) {
-    this.router.navigate(['/forecast', zipcode])
+  showForecast($event) {
+    this.router.navigate(['/forecast', $event])
   }
 
   changeTab(zipcode: string) {
