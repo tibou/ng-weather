@@ -13,13 +13,13 @@ import { RouterModule } from '@angular/router';
 export class TabItemComponent {
 
   @Input()
-  private item: ConditionsAndZip;
+  public item: ConditionsAndZip;
 
   @Input()
-  private srcUrl: string;
+  public srcUrl: string;
 
   @Output()
-  private show = new EventEmitter<string>();
+  public show = new EventEmitter<string>();
 
   showForecast() {
     this.show.emit(this.item.zip)
