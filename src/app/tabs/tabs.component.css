@@ -1,0 +1,26 @@
+.close {
+    cursor: pointer;
+}
+
+.flex {
+    display: flex;
+    justify-content: space-between;
+}
+
+.tab-content {
+    padding-top: 30px;
+    padding-bottom: 30px;
+    padding-left: 30px;
+    padding-right: 80px;
+    border: 2px solid #000;
+}
+
+.nav-tabs .tab-title {
+    background-color: #617AA0;
+    color: #fff;
+}
+
+.nav-tabs .close {
+    margin-left: 10px;
+    color: #fff;
+}

@@ -1,0 +1,9 @@
+<ul class="nav nav-tabs">
+    <li *ngFor="let loc of elements; let i=index" (click)="setTab(i)" role="presentation"
+        [ngClass]="{'active': i === activatedTab}">
+        <a href="#" class="tab-title">
+            {{loc.title}}
+            <span class="close" (click)="removeTab(i)">&times;</span>
+        </a>
+    </li>
+</ul>

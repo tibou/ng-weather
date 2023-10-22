@@ -1,17 +1,25 @@
 <div>
-    <ul class="nav nav-tabs">
-        <li *ngFor="let loc of currentConditionsByZip()" (click)="changeTab(loc.zip)" role="presentation"
-            [ngClass]="{'active': loc.zip === location().zip}">
-            <a href="#" class="tab-title">
-                {{loc.data.name}} ({{loc.zip}})
-                <span class="close" (click)="locationService.removeLocation(loc.zip)">&times;</span>
-            </a>
-        </li>
-    </ul>
+    <!--TabContainerComponent (app-tab-container) is a generic and reusable presentation component
+         that takes any data type and TemplateRef to display-->
 
-    <div class="tab-content" *ngIf="currentConditionsByZip().length > 0">
-        <app-tab-item [item]="location()" (show)="showForecast($event)"
-            [srcUrl]="weatherService.getWeatherIcon(location().data.weather[0].id)">
-        </app-tab-item>
-    </div>
+    <!--To display tabs-->
+    <app-tab-container [data]="tabsElements()" [contentRef]="tabsRef"></app-tab-container>
+
+    <!-- To display current condition-->
+    <app-tab-container [data]="location()" [contentRef]="tabContent"></app-tab-container>
+
+    <!--Template of the tabs; it uses TabsComponent. TabsComponent is generic and reusable with any data type that has
+    a title propertie-->
+    <ng-template #tabsRef let-data>
+        <app-tabs [elements]="data" (onTabChange)="changeTab($event)" (onTabRemove)="removeTab($event)"></app-tabs>
+    </ng-template>
+
+    <!--Template of current condition; it uses TabItemComponent-->
+    <ng-template #tabContent let-data>
+        <div class="tab-content" *ngIf="currentConditionsByZip().length > 0">
+            <app-tab-item [item]="data" (show)="showForecast($event)"
+                [srcUrl]="weatherService.getWeatherIcon(location().data.weather[0].id)">
+            </app-tab-item>
+        </div>
+    </ng-template>
 </div>
