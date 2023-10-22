@@ -27,8 +27,8 @@ export class DisplayTabComponent {
     this.location = computed(() => this.currentConditionsByZip()[0]);
   }
 
-  showForecast($event) {
-    this.router.navigate(['/forecast', $event])
+  showForecast() {
+    this.router.navigate(['/forecast', this.location().zip])
   }
 
   // this function is to create title propertie in conditions data to make them compliant with the TabsComponent

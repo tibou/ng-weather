@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConditionsAndZip } from 'app/conditions-and-zip.type';
 import { RouterModule } from '@angular/router';
@@ -10,19 +10,12 @@ import { RouterModule } from '@angular/router';
   templateUrl: './tab-item.component.html',
   styleUrls: ['./tab-item.component.css']
 })
-export class TabItemComponent {
+export class TabItemComponent<T> {
 
   @Input()
-  public item: ConditionsAndZip;
+  public item: T;
 
   @Input()
-  public srcUrl: string;
-
-  @Output()
-  public show = new EventEmitter<string>();
-
-  showForecast() {
-    this.show.emit(this.item.zip)
-  }
+  public templateRef: TemplateRef<any>;
 
 }
