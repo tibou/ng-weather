@@ -4,7 +4,7 @@ node {
     }
     nodejs('v9') {
         stage('Install') {
-           sh 'npm install'
+           sh 'npm install --legacy-peer-deps'
         }
         stage('Build') {
            sh 'ng build' 
